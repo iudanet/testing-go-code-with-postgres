@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Vasiliy Vasilyuk. All rights reserved.
+// Copyright (c) 2023-2024 Vasiliy Vasilyuk. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -6,18 +6,23 @@ package testing_go_code_with_postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewUserRepository(db *pgxpool.Pool) *UserRepository {
+type DB interface {
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+}
+
+func NewUserRepository(db DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
 type UserRepository struct {
-	db *pgxpool.Pool
+	db DB
 }
 
 func (r *UserRepository) ReadUser(ctx context.Context, userID uuid.UUID) (User, error) {
@@ -25,10 +30,11 @@ func (r *UserRepository) ReadUser(ctx context.Context, userID uuid.UUID) (User, 
 
 	user := User{}
 
-	row := r.db.QueryRow(ctx, sql, userID)
+	row := r.db.QueryRowContext(ctx, sql, userID)
+
 	err := row.Scan(&user.ID, &user.Username, &user.CreatedAt)
 	if err != nil {
-		const format = "failed selection of User from database: %v"
+		const format = "failed selection of User from database: %w"
 		return User{}, fmt.Errorf(format, err)
 	}
 
@@ -38,14 +44,13 @@ func (r *UserRepository) ReadUser(ctx context.Context, userID uuid.UUID) (User, 
 func (r *UserRepository) CreateUser(ctx context.Context, user User) error {
 	const sql = `INSERT INTO users (user_id, username, created_at) VALUES ($1,$2,$3);`
 
-	_, err := r.db.Exec(
+	_, err := r.db.ExecContext(
 		ctx,
 		sql,
 		user.ID,
 		user.Username,
 		user.CreatedAt,
 	)
-
 	if err != nil {
 		const format = "failed insertion of User to database: %v"
 		return fmt.Errorf(format, err)

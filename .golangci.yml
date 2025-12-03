@@ -1,16 +1,52 @@
+---
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
     - godot
-    - goimports
-    - gosimple
     - govet
     - ineffassign
     - misspell
     - staticcheck
     - testifylint
     - testpackage
-    - typecheck
     - unused
     - whitespace
+    - wsl
+  settings:
+    unused:
+      field-writes-are-uses: false
+      post-statements-are-reads: true
+      exported-fields-are-used: false
+      local-variables-are-used: false
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+    - golines
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - localmodule
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

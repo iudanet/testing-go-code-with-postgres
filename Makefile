@@ -8,6 +8,7 @@ build: ## Build a command to quickly check compiles.
 
 .PHONY: check
 check: lint build test ## Runs all necessary code checks.
+	@go mod tidy
 
 .PHONY: test
 test: ## Run all tests.
@@ -30,8 +31,9 @@ test-env-down: ## Down and cleanup test environment.
 lint: tools ## Check the project with lint.
 	@golangci-lint run --fix ./...
 
+.PHONY: tools
 tools: ## Install all needed tools, e.g.
-	@go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
+	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.5
 
 .PHONY: help
 help: ## Show help for each of the Makefile targets.
